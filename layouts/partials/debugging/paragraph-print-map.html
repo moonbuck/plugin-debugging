@@ -1,7 +1,7 @@
 {{- /* Partial for pretty printing map values using a paragraph HTML tag */ -}}
 
 {{- /* Ensure there is a map value */ -}}
-{{-if (reflect.IsMap .) -}}
+{{- if (reflect.IsMap .) -}}
 
 <p>
 {{ template "print-map" (dict "Map" . "Indent" 0) }}
@@ -14,9 +14,9 @@
 
 {{- $map := .Map -}}
 {{- $indention := "" -}}
-{{- $indent := .Indent -}}
+{{- $indent := mul .Indent 4 -}}
 {{- if $indent -}}
-{{- range (seq $indent) }}{{ $indention = printf "%s&nbsp;" $indent }}{{ end -}}
+{{- range (seq $indent) }}{{ $indention = printf "%s&nbsp;" $indention }}{{ end -}}
 {{- end -}}
 
 {{- if (reflect.IsMap $map) -}}
@@ -27,7 +27,27 @@
 {{ printf "<span>%s%s:</span><br>" $indention $key | safeHTML }}
 {{ template "print-map" (dict "Map" $value "Indent" (add $indent 1)) }}
     {{- else -}}
-{{ printf "<span>%s: %#v</span><br>" }}
+    
+      {{- if (reflect.IsSlice $value) -}}
+      
+        {{- if $value -}}
+      
+          {{ $count := len $value }}
+          {{- $type := printf "%T" (index $value 0) -}}
+          
+{{ printf "<span>%s%s: [%s(%v)]</span><br>" $indention $key $type $count | safeHTML }}    
+
+        {{- else -}}
+
+{{ printf "<span>%s%s: []</span><br>" $indention $key | safeHTML }}             
+
+        {{- end -}}
+
+      {{- else -}}
+      
+{{ printf "<span>%s%s: %v</span><br>" $indention $key $value | safeHTML }}    
+      
+      {{- end -}}
     {{- end -}}
   
   {{- end -}}
