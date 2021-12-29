@@ -1,0 +1,98 @@
+{{- if (reflect.IsMap .) -}}
+  <p>
+  {{ template "print-directory-maybe" . }}
+  </p>
+{{- else if (reflect.IsSlice .) -}}
+  {{- range . -}}
+    {{- if (reflect.IsMap .) -}}
+    <p>
+    {{ template "print-directory-maybe" . }}
+    </p>
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "print-directory-maybe" -}}
+  {{- if (and (reflect.IsMap .) (isset . "directory")) -}}
+    {{ template "print-directory" . }}
+  {{- end -}}
+{{- end -}}
+
+{{- define "print-directory" -}}
+
+  {{- $parameters := . -}}
+  {{- $indention := "" -}}
+  {{- $indent := mul (add ($parameters.indent | default 0) 1) 4 -}}
+  {{- if $indent -}}
+    {{- range (seq $indent) }}
+      {{ $indention = printf "%s&nbsp;" $indention }}
+    {{ end -}}
+  {{- end -}}
+
+  {{- with $parameters.directory -}}
+  
+  {{- $directory := . -}}
+  {{- if not (strings.HasSuffix $directory "/") -}}
+  {{- $directory = printf "%s/" $directory -}}
+  {{- end -}}
+  
+  <span>{{ $directory }}</span><br>
+  
+  {{- range readDir $directory -}}
+    
+    {{- $file := . -}}
+    
+    {{- $name := $file.Name -}}
+    {{- if $file.IsDir }}{{ $name = printf "%s/" $name }}{{ end -}}
+    
+    <span>{{ $indention | safeHTML }}{{ $name }}</span><br>
+    {{ if (and $file.IsDir $parameters.recursive)  }}
+    {{- $directory = path.Join $directory $file.Name -}}
+    {{- $parameters = dict "directory" $directory "indent" (add 2 ($parameters.indent | default 0)) "recursive" true -}}
+    {{ if fileExists $directory }}
+    {{ template "print-directory-recursive" $parameters }}
+    {{ end }}
+    {{- end -}}
+    {{- end -}}
+    
+    
+  {{- end -}}
+
+{{- end -}}
+
+{{- define "print-directory-recursive" -}}
+
+  {{- $parameters := . -}}
+  {{- $indention := "" -}}
+  {{- $indent := mul $parameters.indent 4 -}}
+  {{- if $indent -}}
+    {{- range (seq $indent) }}
+      {{ $indention = printf "%s&nbsp;" $indention }}
+    {{ end -}}
+  {{- end -}}
+
+  {{- with $parameters.directory -}}
+  
+  {{- $directory := . -}}
+  
+  {{- range readDir $directory -}}
+    
+    {{- $file := . -}}
+    
+    {{- $name := $file.Name -}}
+    {{- if $file.IsDir }}{{ $name = printf "%s/" $name }}{{ end -}}
+    
+    <span>{{ $indention | safeHTML }}{{ $name }}</span><br>
+    {{ if (and $file.IsDir $parameters.recursive)  }}
+    {{- $directory = path.Join $directory $file.Name -}}
+    {{- $parameters = dict "directory" $directory "indent" (add 1 ($parameters.indent | default 0)) "recursive" true -}}
+    {{ if fileExists $directory }}
+    {{ template "print-directory-recursive" $parameters }}
+    {{ end }}
+    {{- end -}}
+    {{- end -}}
+    
+    
+  {{- end -}}
+
+  {{- end -}}

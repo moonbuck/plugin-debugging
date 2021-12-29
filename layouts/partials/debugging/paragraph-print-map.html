@@ -23,7 +23,7 @@
 
   {{- range $key, $value := $map -}}
   
-    {{- if (reflect.IsMap $value) -}}
+    {{- if (reflect.IsM| ap $value) -}}
 {{ printf "<span>%s%s:</span><br>" $indention $key | safeHTML }}
 {{ template "print-map" (dict "Map" $value "Indent" (add $indent 1)) }}
     {{- else -}}
